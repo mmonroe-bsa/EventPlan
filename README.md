@@ -49,7 +49,8 @@ With the dev server running on `http://localhost:3000`:
    ```
 
 ### Troubleshooting installation
-- **npm not found**: Install Node.js + npm (e.g., via `nvm install` or your OS package manager) then re-run `npm install`.
+- **npm not found**: Verify `npm --version` works. If not, install Node.js + npm (e.g., via `nvm install` in this repo or your OS package manager) and retry `npm install`.
+- **Offline or corporate networks**: If your environment blocks package downloads (403/timeout), configure your network/proxy or mirror the npm registry, then re-run `npm install`.
 - **Locked dependencies**: If your environment blocks `npm install`, try `npm ci` (with an existing lockfile) or `corepack enable` + `pnpm install` after `npm install -g pnpm`.
 
 ### Endpoints
