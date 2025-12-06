@@ -1,2 +1,72 @@
 # EventPlan
-Event Planning Application
+EventPlan is an event planning application focused on guided planning with flexible dashboards.
+
+## Product requirements
+See `docs/product_requirements.md` for the current product requirements and priorities.
+
+## API prototype
+An early Express + TypeScript prototype is included to start exercising the data model and templates.
+
+### Prerequisites
+- Node.js 20.x and npm. If you use `nvm`, run `nvm use` in the repo root (see `.nvmrc`).
+
+### Setup
+1. Install dependencies: `npm install`
+2. Start the dev server: `npm run dev`
+
+### Quickstart (sample API calls)
+With the dev server running on `http://localhost:3000`:
+
+1. Create a plan using a template
+   ```bash
+   curl -X POST http://localhost:3000/plans \
+     -H "Content-Type: application/json" \
+     -d '{"name":"Fundraiser 2025","template":"Fundraiser"}'
+   ```
+
+2. Add a task linked to that plan (replace `<PLAN_ID>` with the value returned above)
+   ```bash
+   curl -X POST http://localhost:3000/plans/<PLAN_ID>/tasks \
+     -H "Content-Type: application/json" \
+     -d '{"title":"Book venue","status":"in-progress","dueDate":"2025-04-15"}'
+   ```
+
+2b. Add a KPI objective to the same plan (replace `<PLAN_ID>` with the value returned above)
+   ```bash
+   curl -X POST http://localhost:3000/plans/<PLAN_ID>/objectives \
+     -H "Content-Type: application/json" \
+     -d '{"title":"Increase donations","kpi":"Total donations","targetMetric":"$25,000"}'
+   ```
+
+3. List all plans
+   ```bash
+   curl http://localhost:3000/plans
+   ```
+
+4. Get an event overview dashboard snapshot for a plan
+   ```bash
+   curl http://localhost:3000/plans/<PLAN_ID>/overview
+   ```
+
+### Troubleshooting installation
+- **npm not found**: Verify `npm --version` works. If not, install Node.js + npm (e.g., via `nvm install` in this repo or your OS package manager) and retry `npm install`.
+- **Offline or corporate networks**: If your environment blocks package downloads (403/timeout), configure your network/proxy or mirror the npm registry, then re-run `npm install`.
+- **Locked dependencies**: If your environment blocks `npm install`, try `npm ci` (with an existing lockfile) or `corepack enable` + `pnpm install` after `npm install -g pnpm`.
+
+### Endpoints
+- `GET /health` simple health check.
+- `GET /templates` list available starter templates.
+- `POST /plans` create a new plan (optionally pass `{ template: "Fundraiser" }`).
+- `GET /plans` list all in-memory plans.
+- `GET /plans/:id` get a plan.
+- `GET /plans/:id/overview` dashboard-friendly summary with counts and next milestone.
+- `PATCH /plans/:id/sections/:section` update section status/summary.
+- `POST /plans/:id/tasks` add a task.
+- `POST /plans/:id/risks` add a risk with optional links to tasks/deliverables.
+- `POST /plans/:id/communications` add a communications grid entry.
+- `POST /plans/:id/deliverables` add a deliverable.
+- `POST /plans/:id/objectives` add an objective/KPI entry.
+- `POST /plans/:id/staff` add staff/roles.
+- `POST /plans/:id/schedule` add a milestone.
+
+> Note: this prototype stores data in memory and is intended for rapid iteration on the guided flow and dashboard concepts.
