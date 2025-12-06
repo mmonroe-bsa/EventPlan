@@ -5,6 +5,7 @@ import {
   Deliverable,
   Objective,
   Plan,
+  PlanOverview,
   Risk,
   ScheduleMilestone,
   SectionName,
@@ -18,6 +19,59 @@ const app = express();
 app.use(express.json());
 
 const plans: Record<string, Plan> = {};
+
+function parseDate(date?: string): Date | undefined {
+  if (!date) return undefined;
+  const parsed = new Date(date);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+function buildPlanOverview(plan: Plan): PlanOverview {
+  const tasksByStatus = plan.tasks.reduce(
+    (acc, task) => {
+      acc.total += 1;
+      if (task.status === "todo") acc.todo += 1;
+      else if (task.status === "in-progress") acc.inProgress += 1;
+      else if (task.status === "blocked") acc.blocked += 1;
+      else if (task.status === "done") acc.done += 1;
+      return acc;
+    },
+    { total: 0, todo: 0, inProgress: 0, blocked: 0, done: 0 }
+  );
+
+  const risksByImpact = plan.risks.reduce(
+    (acc, risk) => {
+      acc.total += 1;
+      if (risk.impact === "high") acc.highImpact += 1;
+      else if (risk.impact === "medium") acc.mediumImpact += 1;
+      else if (risk.impact === "low") acc.lowImpact += 1;
+      return acc;
+    },
+    { total: 0, highImpact: 0, mediumImpact: 0, lowImpact: 0 }
+  );
+
+  const upcomingMilestones = plan.schedule
+    .map((m) => ({ milestone: m, date: parseDate(m.startDate) }))
+    .filter((m) => !!m.date)
+    .sort((a, b) => (a.date!.getTime() > b.date!.getTime() ? 1 : -1));
+
+  const nextMilestone = upcomingMilestones.length > 0 ? upcomingMilestones[0].milestone : undefined;
+
+  return {
+    id: plan.id,
+    name: plan.name,
+    template: plan.template,
+    eventDate: plan.eventDate,
+    sections: plan.sections,
+    objectives: { total: plan.objectives.length },
+    deliverables: { total: plan.deliverables.length },
+    staff: { total: plan.staff.length },
+    tasks: tasksByStatus,
+    risks: risksByImpact,
+    schedule: { total: plan.schedule.length, nextMilestone },
+    communications: { total: plan.communications.length },
+  };
+}
 
 function defaultSections(): SectionStatus[] {
   const sections: SectionName[] = [
@@ -131,6 +185,15 @@ app.get("/plans/:id", (req, res) => {
     return;
   }
   res.json(plan);
+});
+
+app.get("/plans/:id/overview", (req, res) => {
+  const plan = plans[req.params.id];
+  if (!plan) {
+    res.status(404).json({ error: "plan not found" });
+    return;
+  }
+  res.json(buildPlanOverview(plan));
 });
 
 app.patch("/plans/:id/sections/:section", (req, res) => {

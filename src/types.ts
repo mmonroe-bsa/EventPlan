@@ -102,6 +102,21 @@ export interface Plan {
   communications: Communication[];
 }
 
+export interface PlanOverview {
+  id: string;
+  name: string;
+  template?: string;
+  eventDate?: string;
+  sections: SectionStatus[];
+  objectives: { total: number };
+  deliverables: { total: number };
+  staff: { total: number };
+  tasks: { total: number; todo: number; inProgress: number; blocked: number; done: number };
+  risks: { total: number; highImpact: number; mediumImpact: number; lowImpact: number };
+  schedule: { total: number; nextMilestone?: ScheduleMilestone };
+  communications: { total: number };
+}
+
 export interface TemplateDefinition {
   name: string;
   summary: string;

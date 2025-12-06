@@ -43,6 +43,11 @@ With the dev server running on `http://localhost:3000`:
    curl http://localhost:3000/plans
    ```
 
+4. Get an event overview dashboard snapshot for a plan
+   ```bash
+   curl http://localhost:3000/plans/<PLAN_ID>/overview
+   ```
+
 ### Troubleshooting installation
 - **npm not found**: Install Node.js + npm (e.g., via `nvm install` or your OS package manager) then re-run `npm install`.
 - **Locked dependencies**: If your environment blocks `npm install`, try `npm ci` (with an existing lockfile) or `corepack enable` + `pnpm install` after `npm install -g pnpm`.
@@ -53,6 +58,7 @@ With the dev server running on `http://localhost:3000`:
 - `POST /plans` create a new plan (optionally pass `{ template: "Fundraiser" }`).
 - `GET /plans` list all in-memory plans.
 - `GET /plans/:id` get a plan.
+- `GET /plans/:id/overview` dashboard-friendly summary with counts and next milestone.
 - `PATCH /plans/:id/sections/:section` update section status/summary.
 - `POST /plans/:id/tasks` add a task.
 - `POST /plans/:id/risks` add a risk with optional links to tasks/deliverables.
