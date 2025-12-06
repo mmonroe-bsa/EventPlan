@@ -144,6 +144,24 @@ app.patch("/plans/:id/sections/:section", (req, res) => {
   res.json(plan.sections);
 });
 
+app.post("/plans/:id/objectives", (req, res) => {
+  const plan = plans[req.params.id];
+  if (!plan) return res.status(404).json({ error: "plan not found" });
+  const payload = req.body as Partial<Objective>;
+  if (!payload.title || !payload.kpi) {
+    return res.status(400).json({ error: "title and kpi are required" });
+  }
+  const objective: Objective = {
+    id: uuidv4(),
+    title: payload.title,
+    kpi: payload.kpi,
+    targetMetric: payload.targetMetric,
+    currentValue: payload.currentValue,
+  };
+  plan.objectives.push(objective);
+  res.status(201).json(objective);
+});
+
 app.post("/plans/:id/tasks", (req, res) => {
   const plan = plans[req.params.id];
   if (!plan) return res.status(404).json({ error: "plan not found" });

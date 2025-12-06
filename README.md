@@ -31,6 +31,13 @@ With the dev server running on `http://localhost:3000`:
      -d '{"title":"Book venue","status":"in-progress","dueDate":"2025-04-15"}'
    ```
 
+2b. Add a KPI objective to the same plan (replace `<PLAN_ID>` with the value returned above)
+   ```bash
+   curl -X POST http://localhost:3000/plans/<PLAN_ID>/objectives \
+     -H "Content-Type: application/json" \
+     -d '{"title":"Increase donations","kpi":"Total donations","targetMetric":"$25,000"}'
+   ```
+
 3. List all plans
    ```bash
    curl http://localhost:3000/plans
@@ -51,6 +58,7 @@ With the dev server running on `http://localhost:3000`:
 - `POST /plans/:id/risks` add a risk with optional links to tasks/deliverables.
 - `POST /plans/:id/communications` add a communications grid entry.
 - `POST /plans/:id/deliverables` add a deliverable.
+- `POST /plans/:id/objectives` add an objective/KPI entry.
 - `POST /plans/:id/staff` add staff/roles.
 - `POST /plans/:id/schedule` add a milestone.
 
