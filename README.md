@@ -7,9 +7,16 @@ See `docs/product_requirements.md` for the current product requirements and prio
 ## API prototype
 An early Express + TypeScript prototype is included to start exercising the data model and templates.
 
+### Prerequisites
+- Node.js 20.x and npm. If you use `nvm`, run `nvm use` in the repo root (see `.nvmrc`).
+
 ### Setup
 1. Install dependencies: `npm install`
 2. Start the dev server: `npm run dev`
+
+### Troubleshooting installation
+- **npm not found**: Install Node.js + npm (e.g., via `nvm install` or your OS package manager) then re-run `npm install`.
+- **Locked dependencies**: If your environment blocks `npm install`, try `npm ci` (with an existing lockfile) or `corepack enable` + `pnpm install` after `npm install -g pnpm`.
 
 ### Endpoints
 - `GET /health` simple health check.
