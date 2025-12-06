@@ -14,6 +14,28 @@ An early Express + TypeScript prototype is included to start exercising the data
 1. Install dependencies: `npm install`
 2. Start the dev server: `npm run dev`
 
+### Quickstart (sample API calls)
+With the dev server running on `http://localhost:3000`:
+
+1. Create a plan using a template
+   ```bash
+   curl -X POST http://localhost:3000/plans \
+     -H "Content-Type: application/json" \
+     -d '{"name":"Fundraiser 2025","template":"Fundraiser"}'
+   ```
+
+2. Add a task linked to that plan (replace `<PLAN_ID>` with the value returned above)
+   ```bash
+   curl -X POST http://localhost:3000/plans/<PLAN_ID>/tasks \
+     -H "Content-Type: application/json" \
+     -d '{"title":"Book venue","status":"in-progress","dueDate":"2025-04-15"}'
+   ```
+
+3. List all plans
+   ```bash
+   curl http://localhost:3000/plans
+   ```
+
 ### Troubleshooting installation
 - **npm not found**: Install Node.js + npm (e.g., via `nvm install` or your OS package manager) then re-run `npm install`.
 - **Locked dependencies**: If your environment blocks `npm install`, try `npm ci` (with an existing lockfile) or `corepack enable` + `pnpm install` after `npm install -g pnpm`.
