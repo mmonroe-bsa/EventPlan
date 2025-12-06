@@ -1,0 +1,2 @@
+# EventPlan
+Event Planning Application
