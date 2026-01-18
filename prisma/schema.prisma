@@ -1,0 +1,464 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrgRole {
+  ADMIN
+  MEMBER
+}
+
+enum EventRole {
+  EVENT_MANAGER
+  LOGISTICS_LEAD
+  OPERATIONS_LEAD
+  PROGRAM_LEAD
+  REGISTRATION_LEAD
+  HEALTH_SAFETY_LEAD
+}
+
+enum UnitType {
+  TROOP
+  STAFF
+}
+
+enum YouthAdult {
+  YOUTH
+  ADULT
+}
+
+enum RoleLabel {
+  SM
+  ASM
+  SPL
+  ADULT
+  YOUTH
+}
+
+enum CheckInStatus {
+  NOT_CHECKED_IN
+  CHECKED_IN
+}
+
+enum MedicalFormStatus {
+  NOT_PROVIDED
+  ON_FILE_CURRENT
+  ON_FILE_EXPIRED
+  EXCEPTION_APPROVED
+}
+
+enum MedicalFormVerificationMethod {
+  ATTESTED
+  VERIFIED
+}
+
+enum MedicalExceptionReason {
+  RELIGIOUS_OBJECTION
+  ADMIN_OVERRIDE
+  OTHER_NON_MEDICAL
+}
+
+enum YptStatus {
+  NOT_PROVIDED
+  CURRENT
+  EXPIRED
+  EXCEPTION_APPROVED
+}
+
+enum YptVerificationMethod {
+  ATTESTED
+  VERIFIED
+}
+
+enum YptExceptionReason {
+  ADMIN_OVERRIDE
+  OTHER_NON_TRAINING
+}
+
+enum IncidentType {
+  INJURY
+  ILLNESS
+  NEAR_MISS
+  PROPERTY_DAMAGE
+  BEHAVIORAL
+}
+
+enum IncidentStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED_CLOSED
+}
+
+enum TaskOwnerRule {
+  EVENT_ROLE
+  STATION_ROLE
+}
+
+enum NotificationType {
+  INVITE_CREATED
+  ROLE_ASSIGNED
+  TASK_ASSIGNED
+  TASK_BLOCKED
+  INCIDENT_SUBMITTED
+  PLAN_PUBLISHED
+  BROADCAST_SENT
+  SHIFT_ASSIGNED
+  ROTATION_PUBLISHED
+}
+
+enum DigestMode {
+  IMMEDIATE
+  DIGEST_15_MIN
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+enum AudienceType {
+  EVENT_ROLE_HOLDERS
+  ALL_ADULTS
+  STATION_STAFF
+  TROOP_LEADERS
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  users     User[]
+  events    Event[]
+}
+
+model User {
+  id                         String   @id @default(cuid())
+  name                       String
+  email                      String   @unique
+  phone                      String?
+  emailVerified              DateTime?
+  image                      String?
+  passwordHash               String?
+  orgRole                    OrgRole @default(MEMBER)
+  emailNotificationsEnabled  Boolean  @default(false)
+  notificationDigestMode     DigestMode @default(DIGEST_15_MIN)
+  createdAt                  DateTime @default(now())
+  organizationId             String
+  organization               Organization @relation(fields: [organizationId], references: [id])
+  accounts                   Account[]
+  sessions                   Session[]
+  eventRoleAssignments        EventRoleAssignment[]
+  unitMemberships            UnitMembership[]
+  invitesCreated             Invite[] @relation("InviteCreator")
+  auditLogs                  AuditLog[] @relation("AuditActor")
+  incidentsReviewed          Incident[] @relation("IncidentReviewer")
+  notifications              Notification[]
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Event {
+  id             String      @id @default(cuid())
+  name           String
+  status         EventStatus @default(DRAFT)
+  startDate      DateTime?
+  endDate        DateTime?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  templateId     String?
+  template       EventTemplate? @relation(fields: [templateId], references: [id])
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  eventRoles     EventRoleAssignment[]
+  units          Unit[]
+  stations       Station[]
+  rotationBlocks RotationBlock[]
+  tasks          Task[]
+  checklistItems ChecklistItem[]
+  incidents      Incident[]
+  auditLogs      AuditLog[]
+  notifications  Notification[]
+  broadcasts     Broadcast[]
+}
+
+model EventRoleAssignment {
+  id        String    @id @default(cuid())
+  eventId   String
+  event     Event     @relation(fields: [eventId], references: [id])
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  role      EventRole
+  createdAt DateTime  @default(now())
+}
+
+model Unit {
+  id         String   @id @default(cuid())
+  name       String
+  unitType   UnitType
+  unitNumber String?
+  eventId    String
+  event      Event    @relation(fields: [eventId], references: [id])
+  members    UnitMembership[]
+  rotations  RotationAssignment[]
+}
+
+model UnitMembership {
+  id                           String   @id @default(cuid())
+  userId                       String
+  user                         User     @relation(fields: [userId], references: [id])
+  unitId                       String
+  unit                         Unit     @relation(fields: [unitId], references: [id])
+  youthAdult                   YouthAdult
+  roleLabel                    RoleLabel
+  checkInStatus                CheckInStatus @default(NOT_CHECKED_IN)
+  medicalFormStatus            MedicalFormStatus @default(NOT_PROVIDED)
+  medicalFormExpirationDate    DateTime?
+  medicalFormVerificationMethod MedicalFormVerificationMethod?
+  medicalFormReferenceId       String?
+  medicalFormVerifiedByUserId  String?
+  medicalFormVerifiedAt         DateTime?
+  medicalExceptionReason       MedicalExceptionReason?
+  yptStatus                    YptStatus?
+  yptExpirationDate            DateTime?
+  yptVerificationMethod        YptVerificationMethod?
+  yptReferenceId               String?
+  yptVerifiedByUserId          String?
+  yptVerifiedAt                DateTime?
+  yptExceptionReason           YptExceptionReason?
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
+  shiftAssignments             ShiftAssignment[]
+}
+
+model PendingMembership {
+  id         String   @id @default(cuid())
+  email      String
+  unitId     String
+  unit       Unit     @relation(fields: [unitId], references: [id])
+  youthAdult YouthAdult
+  roleLabel  RoleLabel
+  inviteId   String
+  invite     Invite   @relation(fields: [inviteId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model Invite {
+  id           String   @id @default(cuid())
+  email        String
+  token        String   @unique
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  createdAt    DateTime @default(now())
+  eventId      String
+  event        Event    @relation(fields: [eventId], references: [id])
+  createdByUserId String
+  createdByUser   User   @relation("InviteCreator", fields: [createdByUserId], references: [id])
+  pendingMemberships PendingMembership[]
+}
+
+model Station {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  name      String
+  shifts    StationShift[]
+  rotations RotationAssignment[]
+}
+
+model RotationBlock {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  startTime DateTime
+  endTime   DateTime
+  rotations RotationAssignment[]
+}
+
+model RotationAssignment {
+  id             String   @id @default(cuid())
+  rotationBlockId String
+  rotationBlock  RotationBlock @relation(fields: [rotationBlockId], references: [id])
+  unitId         String
+  unit           Unit     @relation(fields: [unitId], references: [id])
+  stationId      String?
+  station        Station? @relation(fields: [stationId], references: [id])
+  openProgram    Boolean  @default(false)
+}
+
+model StationShift {
+  id        String   @id @default(cuid())
+  stationId String
+  station   Station  @relation(fields: [stationId], references: [id])
+  startTime DateTime
+  endTime   DateTime
+  assignments ShiftAssignment[]
+}
+
+model ShiftAssignment {
+  id              String   @id @default(cuid())
+  stationShiftId  String
+  stationShift    StationShift @relation(fields: [stationShiftId], references: [id])
+  unitMembershipId String
+  unitMembership  UnitMembership @relation(fields: [unitMembershipId], references: [id])
+  createdAt       DateTime @default(now())
+}
+
+model EventTemplate {
+  id             String   @id @default(cuid())
+  name           String
+  description    String
+  requiredRoles  EventRole[]
+  taskTemplates  TaskTemplate[]
+  checklistTemplates ChecklistTemplate[]
+  stations       StationTemplate[]
+  rotationBlocks RotationBlockTemplate[]
+  createdAt      DateTime @default(now())
+}
+
+model TaskTemplate {
+  id             String   @id @default(cuid())
+  templateId     String
+  template       EventTemplate @relation(fields: [templateId], references: [id])
+  title          String
+  dueOffsetDays  Int
+  ownerRule      TaskOwnerRule
+  ownerRole      EventRole
+}
+
+model ChecklistTemplate {
+  id             String   @id @default(cuid())
+  templateId     String
+  template       EventTemplate @relation(fields: [templateId], references: [id])
+  title          String
+  phase          String
+  dueOffsetDays  Int
+  ownerRole      EventRole
+}
+
+model StationTemplate {
+  id         String   @id @default(cuid())
+  templateId String
+  template   EventTemplate @relation(fields: [templateId], references: [id])
+  name       String
+}
+
+model RotationBlockTemplate {
+  id         String   @id @default(cuid())
+  templateId String
+  template   EventTemplate @relation(fields: [templateId], references: [id])
+  startTime  String
+  endTime    String
+}
+
+model Task {
+  id         String   @id @default(cuid())
+  eventId    String
+  event      Event    @relation(fields: [eventId], references: [id])
+  title      String
+  ownerRole  EventRole
+  dueDate    DateTime
+  completedAt DateTime?
+}
+
+model ChecklistItem {
+  id         String   @id @default(cuid())
+  eventId    String
+  event      Event    @relation(fields: [eventId], references: [id])
+  title      String
+  phase      String
+  ownerRole  EventRole
+  dueDate    DateTime
+  completedAt DateTime?
+}
+
+model Incident {
+  id              String   @id @default(cuid())
+  eventId         String
+  event           Event    @relation(fields: [eventId], references: [id])
+  type            IncidentType
+  status          IncidentStatus @default(DRAFT)
+  description     String
+  submittedAt     DateTime?
+  reviewedAt      DateTime?
+  reviewedByUserId String?
+  reviewedByUser  User? @relation("IncidentReviewer", fields: [reviewedByUserId], references: [id])
+  reviewerNotes   String?
+  createdAt       DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  eventId   String?
+  event     Event?   @relation(fields: [eventId], references: [id])
+  actorId   String?
+  actor     User?    @relation("AuditActor", fields: [actorId], references: [id])
+  action    String
+  metadata  Json
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  eventId    String?
+  event      Event?   @relation(fields: [eventId], references: [id])
+  type       NotificationType
+  channel    NotificationChannel
+  digestMode DigestMode
+  createdAt  DateTime @default(now())
+  readAt     DateTime?
+}
+
+model Broadcast {
+  id            String   @id @default(cuid())
+  eventId       String
+  event         Event    @relation(fields: [eventId], references: [id])
+  createdByUserId String
+  createdByUser  User     @relation(fields: [createdByUserId], references: [id])
+  audience       AudienceType
+  sentAt         DateTime?
+  createdAt      DateTime @default(now())
+}

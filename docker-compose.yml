@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: eventplan
+      POSTGRES_PASSWORD: eventplan
+      POSTGRES_DB: eventplan
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://eventplan:eventplan@db:5432/eventplan
+      NEXTAUTH_SECRET: changeme
+      NEXTAUTH_URL: http://localhost:3000
+      SMTP_HOST: smtp
+      SMTP_PORT: 587
+      SMTP_USER: user
+      SMTP_PASS: pass
+      SMTP_FROM: no-reply@eventplan.local
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+volumes:
+  db-data:
